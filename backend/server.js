@@ -1,4 +1,3 @@
-
 // 1. Load environment variables
 // 2. Connect to MongoDB
 // 3. Set up Express + middleware
@@ -23,25 +22,29 @@ const orderRoutes = require('./routes/orderRoutes');
 const paymentRoutes = require('./routes/paymentRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 
-// Load env vars FIRST — before anything else
+// Load env vars FIRST
 dotenv.config();
 
-// Connect to MongoDB
+// Connect MongoDB
 connectDB();
 
 const app = express();
 
-// ─── Core Middleware ──────────────────────────────────────────────────────────
+// ✅ FIXED CORS FOR LOCAL + LIVE FRONTEND
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: [
+    'http://localhost:5173',
+    'https://foodrush-self.vercel.app',
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
 }));
 
-// parse JSON bodies — limit 10mb for image uploads
+// Parse JSON
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// ─── API Routes ───────────────────────────────────────────────────────────────
+// ================= API ROUTES =================
 app.use('/api/auth', authRoutes);
 app.use('/api/food', foodRoutes);
 app.use('/api/cart', cartRoutes);
@@ -49,52 +52,59 @@ app.use('/api/orders', orderRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/admin', adminRoutes);
 
-// Health check endpoint
+// ================= HEALTH CHECK =================
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'FoodRush API is running 🚀', timestamp: new Date() });
+  res.json({
+    status: 'FoodRush API is running 🚀',
+    timestamp: new Date(),
+  });
 });
 
-// ─── Error Handling ───────────────────────────────────────────────────────────
-// Must be AFTER routes
+// ================= ERROR HANDLING =================
 app.use(notFound);
 app.use(errorHandler);
 
-// ─── HTTP Server + Socket.io ──────────────────────────────────────────────────
+// ================= HTTP + SOCKET SERVER =================
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: [
+      'http://localhost:5173',
+      'https://foodrush-self.vercel.app',
+    ],
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
-// Make io accessible in controllers via req.io
+// Make io available globally
 app.set('io', io);
 
-// Socket.io real-time events
+// ================= SOCKET EVENTS =================
 io.on('connection', (socket) => {
   console.log(`🔌 Socket connected: ${socket.id}`);
 
-  // User joins their personal room for order updates
+  // Join order room
   socket.on('join_order_room', (orderId) => {
     socket.join(`order_${orderId}`);
-    console.log(`📦 User joined room: order_${orderId}`);
+    console.log(`📦 Joined room: order_${orderId}`);
   });
 
-  // Admin joins the admin room
+  // Admin room
   socket.on('join_admin', () => {
     socket.join('admin_room');
-    console.log('👨‍💼 Admin joined admin room');
+    console.log('👨‍💼 Admin joined');
   });
 
   socket.on('disconnect', () => {
-    console.log(`🔌 Socket disconnected: ${socket.id}`);
+    console.log(`❌ Socket disconnected: ${socket.id}`);
   });
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
+// ================= START SERVER =================
 const PORT = process.env.PORT || 5000;
+
 server.listen(PORT, () => {
   console.log(`\n🍔 FoodRush server running on port ${PORT}`);
   console.log(`📡 Environment: ${process.env.NODE_ENV}`);
