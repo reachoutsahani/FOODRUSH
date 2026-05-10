@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // ================= BASE API =================
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: `${import.meta.env.VITE_API_URL}/api`,
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -89,20 +89,17 @@ export const orderAPI = {
     api.put(`/orders/${id}/status`, { status, note }),
 };
 
-// ================= PAYMENT (FINAL 🔥) =================
+// ================= PAYMENT =================
 export const paymentAPI = {
-  // 💳 Razorpay
   createOrder: (orderId) =>
     api.post('/payment/create-order', { orderId }),
 
   verify: (data) =>
     api.post('/payment/verify', data),
 
-  // 📱 UPI (Direct)
   createUPI: (orderId) =>
     api.post('/payment/upi', { orderId }),
 
-  // 💵 COD
   cod: (orderId) =>
     api.post('/payment/cod', { orderId }),
 };
