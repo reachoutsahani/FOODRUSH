@@ -35,6 +35,7 @@ app.use(cors({
   origin: [
     'http://localhost:5173',
     'https://foodrush-self.vercel.app',
+    'https://foodrush-seven.vercel.app',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
   credentials: true,
@@ -72,6 +73,7 @@ const io = new Server(server, {
     origin: [
       'http://localhost:5173',
       'https://foodrush-self.vercel.app',
+      'https://foodrush-seven.vercel.app',
     ],
     methods: ['GET', 'POST'],
     credentials: true,
